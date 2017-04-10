@@ -22,24 +22,26 @@ defmodule Pingboard.Client do
 
   ## Server API
   def init(%Pingboard.Client{client_id: client_id, client_secret: client_secret}) do
-    # need to authenticate with pingboard and store the temporary access_token
-    url = "#{@endpoint}/oauth/token?grant_type=client_credentials"
-    response = HTTPoison.post!(url, {:form, [client_id: client_id, client_secret: client_secret]}, %{"Content-type" => "application/x-www-form-urlencoded"})
-    body = response.body
-    IO.inspect body
-    token_response = Poison.Parser.parse!(body)
-    IO.inspect token_response
-    IO.puts token_response["access_token"]
-    {:ok, %{client_id: client_id, client_secret: client_secret, access_token: token_response["access_token"]}}    
+    case Pingboard.TokenHolder.start_link(client_id, client_secret) do
+      {:ok, _} ->
+        {:ok, %{}}
+      {:error, reason} ->
+        {:stop, reason, %{}}
+    end
   end
 
-  def handle_call(:get_groups, _from, stats) do
+  def handle_call(:get_groups, _from, state) do
     url = "#{@endpoint}/api/v2/groups"
-    response = HTTPoison.get!(url, %{"Authorization" => "Bearer #{stats[:access_token]}"})
-    body = response.body
-    IO.inspect body
-    group_response = Poison.Parser.parse!(body)
-    {:reply, group_response, stats}
-  end
 
+    access_token = Pingboard.TokenHolder.token
+
+    response = HTTPoison.get!(url, %{"Authorization" => "Bearer #{access_token}"})
+    case response do
+      %HTTPoison.Response{body: body,headers: _header, status_code: 200} ->
+        group_response = Poison.Parser.parse!(body)
+        {:reply, group_response, state}
+      _ ->
+        {:stop, "Unhandled Response", %{}}
+    end
+  end
 end
