@@ -1,12 +1,9 @@
 defmodule Pingboard.Client do
   use GenServer
+  alias Pingboard.Types.Group
+  alias Pingboard.Types.User
 
   defstruct client_id: nil, client_secret: nil, access_token: nil
-
-  @type client_id :: binary
-  @type client_secret :: binary
-
-  @type t :: %Pingboard.Client{client_id: client_id, client_secret: client_secret}
 
   ## Client API
 
@@ -18,8 +15,12 @@ defmodule Pingboard.Client do
     GenServer.call(pid, {:get_groups, include_users}, 15000)
   end
 
-  def get_group_users(pid, group) do
-    GenServer.call(pid, {:get_group_users, group}, 15000)
+  def get_users(pid) do
+    GenServer.call(pid, {:get_users}, 15000)
+  end
+
+  def get_users(pid, group) do
+    GenServer.call(pid, {:get_users, group}, 15000)
   end
 
   ## Server API
@@ -38,33 +39,48 @@ defmodule Pingboard.Client do
         true -> "/api/v2/groups?include=users"
         false -> "/api/v2/groups"
       end
-    url = Pingboard.endpoint_url(groups_endpoint)# "#{@endpoint}/api/v2/groups"
 
-    access_token = Pingboard.TokenHolder.token
+    url = Pingboard.endpoint_url(groups_endpoint)
+    handle_get_response(url, fn(body) ->
+      group_response = Poison.decode!(body)
+      groups = group_response["groups"]
 
-    response = HTTPoison.get!(url, %{"Authorization" => "Bearer #{access_token}"})
-    case response do
-      %HTTPoison.Response{body: body,headers: _header, status_code: 200} ->
-        group_response = Poison.decode!(body, as: %{"groups" => [%Pingboard.Group{}]})
-        #Poison.Parser.parse!(body)
-        {:reply, group_response["groups"], state}
-      _ ->
-        {:stop, "Unhandled Response", %{}}
-    end
+      groups = Enum.map(groups, fn(group) -> Group.new(group) end)
+
+      {:reply, groups, state}
+    end)
   end
 
-  def handle_call({:get_group_users, group}, _from, state) do
+  def handle_call({:get_users}, _from, state) do
+    url = Pingboard.endpoint_url("/api/v2/users")
+
+    handle_get_response(url, fn(body) ->
+      users_response = Poison.decode!(body)
+      users =
+        users_response["users"]
+        |> Enum.map(fn(user) -> User.new(user) end)
+      {:reply, users, state}
+    end)
+  end
+
+  def handle_call({:get_users, group}, _from, state) do
     url = Pingboard.endpoint_url("/api/v2/groups/#{group.id}?include=users")
 
-    access_token = Pingboard.TokenHolder.token
+    handle_get_response(url, fn(body) ->
+      group_response = Poison.decode!(body)
+      users = group_response["linked"]["users"]
+      users = Enum.map(users, fn(user) -> User.new(user) end)
+      {:reply, users, state}
+    end)
+  end
 
+  ## Helpers
+  defp handle_get_response(url, callback) do
+    access_token = Pingboard.TokenHolder.token
     response = HTTPoison.get!(url, %{"Authorization" => "Bearer #{access_token}"})
     case response do
       %HTTPoison.Response{body: body,headers: _header, status_code: 200} ->
-        group_response = Poison.decode!(body, as: %{"groups" => [%Pingboard.Group{}]})
-          #Poison.Parser.parse!(body)
-        [users|_] = group_response["groups"]
-        {:reply, users, state}
+        callback.(body)
       _ ->
         {:stop, "Unhandled Response", %{}}
     end
