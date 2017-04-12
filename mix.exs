@@ -20,7 +20,8 @@ defmodule Pingboard.Mixfile do
   defp deps do
     [{:httpoison, "~> 0.11"},
      {:poison, "~> 3.0.0"},
-     {:exconstructor, "~> 1.1.0"}
+     {:exconstructor, "~> 1.1.0"},
+     {:ex_doc, ">= 0.0.0", only: :dev}
     ]
   end
 
