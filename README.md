@@ -1,6 +1,6 @@
 # Pingboard
 
-**TODO: Add description**
+A simple and naïve attempt at an elixir client for the [Pingboard API](http://docs.pingboard.apiary.io/#).
 
 ## Installation
 
@@ -9,7 +9,7 @@ by adding `pingboard` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:pingboard, "~> 0.1.0"}]
+  [{:pingboard, "~> 0.0.1"}]
 end
 ```
 

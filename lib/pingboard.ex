@@ -2,7 +2,7 @@ defmodule Pingboard do
 
 
   @moduledoc """
-  A simple and naïve attempt at an elixir client for the Pingboard API.(http://docs.pingboard.apiary.io/#)
+  A simple and naïve attempt at an elixir client for the [Pingboard API](http://docs.pingboard.apiary.io/#).
 
   ```
     {:ok, client} = Pingboard.new(<your client id>, <your client secret>)
