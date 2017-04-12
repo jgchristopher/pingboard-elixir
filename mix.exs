@@ -43,6 +43,7 @@ defmodule Pingboard.Mixfile do
      files: ["lib", "mix.exs", "README*", "LICENSE*"],
      maintainers: ["John Christopher"],
      licenses: ["MIT"],
-     links: %{"GitHub" => "https://github.com/jgchristopher/pingboard-elixir"]
+     links: %{"GitHub" => "https://github.com/jgchristopher/pingboard-elixir"}
+    ]
   end
 end
