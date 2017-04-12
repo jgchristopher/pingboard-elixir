@@ -3,6 +3,9 @@ defmodule Pingboard.Client do
   alias Pingboard.Types.Group
   alias Pingboard.Types.User
 
+  #@endpoint Application.get_env(:pingboard, :endpoint)
+  @endpoint "https://app.pingboard.com"
+
   defstruct client_id: nil, client_secret: nil, access_token: nil
 
   ## Client API
@@ -40,7 +43,7 @@ defmodule Pingboard.Client do
         false -> "/api/v2/groups"
       end
 
-    url = Pingboard.endpoint_url(groups_endpoint)
+    url = endpoint_url(groups_endpoint)
     handle_get_response(url, fn(body) ->
       group_response = Poison.decode!(body)
       groups = group_response["groups"]
@@ -52,7 +55,7 @@ defmodule Pingboard.Client do
   end
 
   def handle_call({:get_users}, _from, state) do
-    url = Pingboard.endpoint_url("/api/v2/users")
+    url = endpoint_url("/api/v2/users")
 
     handle_get_response(url, fn(body) ->
       users_response = Poison.decode!(body)
@@ -64,7 +67,7 @@ defmodule Pingboard.Client do
   end
 
   def handle_call({:get_users, group}, _from, state) do
-    url = Pingboard.endpoint_url("/api/v2/groups/#{group.id}?include=users")
+    url = endpoint_url("/api/v2/groups/#{group.id}?include=users")
 
     handle_get_response(url, fn(body) ->
       group_response = Poison.decode!(body)
@@ -75,6 +78,10 @@ defmodule Pingboard.Client do
   end
 
   ## Helpers
+  def endpoint_url(url) do
+    @endpoint <> url
+  end
+
   defp handle_get_response(url, callback) do
     access_token = Pingboard.TokenHolder.token
     response = HTTPoison.get!(url, %{"Authorization" => "Bearer #{access_token}"})
@@ -85,5 +92,7 @@ defmodule Pingboard.Client do
         {:stop, "Unhandled Response", %{}}
     end
   end
+
+
 
 end

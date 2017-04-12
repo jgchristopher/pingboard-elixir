@@ -28,7 +28,7 @@ defmodule Pingboard.TokenHolder do
   end
 
   defp get_token(client_id,client_secret) do
-    url = Pingboard.endpoint_url("/oauth/token?grant_type=client_credentials")
+    url = Pingboard.Client.endpoint_url("/oauth/token?grant_type=client_credentials")
     response = HTTPoison.post!(url, {:form, [client_id: client_id, client_secret: client_secret]}, %{"Content-type" => "application/x-www-form-urlencoded"})
     case response do
       %HTTPoison.Response{body: body,headers: _header, status_code: 200} ->
