@@ -14,15 +14,15 @@ defmodule Pingboard.Client do
     GenServer.start_link(__MODULE__, %Pingboard.Client{client_id: client_id, client_secret: client_secret}, name: :pingboard)
   end
 
-  def get_groups(pid, include_users \\ false) do
+  def get_groups(include_users \\ false) do
     GenServer.call(:pingboard, {:get_groups, include_users}, 15000)
   end
 
-  def get_users(pid) do
+  def get_users() do
     GenServer.call(:pingboard, {:get_users}, 15000)
   end
 
-  def get_users(pid, group) do
+  def get_users(group) do
     GenServer.call(:pingboard, {:get_users, group}, 15000)
   end
 
